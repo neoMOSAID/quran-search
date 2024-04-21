@@ -65,6 +65,8 @@ echo "$1" | awk -F '|' -v num1="$2" -v num2="$3" -v num3="$4" -v chap="$chapter_
 if [[ $1 == h ]] ; then
 	echo "Usage:
 $(basename "$0")
+$(basename "$0")	l	list chapters
+$(basename "$0")	ll	list chapters with less
 $(basename "$0")	g	open with uthmani Quran in gedit
 $(basename "$0")	[sourah/chapter] [num1] [num2]"
 	exit
@@ -74,6 +76,18 @@ if [[ $1 == g ]] ; then
 	nohup gedit "$file2" </dev/null >/dev/null 2>&1 &
 	exit
 fi
+
+if [[ $1 == l ]] ; then
+	awk '{printf("%3d-%10s",NR,$0)}; NR%5==0  {printf("\n")}' "$file3"
+	exit
+fi
+
+if [[ $1 == ll ]] ; then
+	cat -n "$file3" | less
+	exit
+fi
+
+
 
 number='^[0-9]+$'
 if [[ "$1" =~ $number ]] ; then
