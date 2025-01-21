@@ -43,6 +43,14 @@ file2="$script_dir/quran-uthmani.txt"
 file3="$script_dir/chapters-simple.txt"
 quran_text="$(paste -d'|' "$file1" "$file2" )"
 
+if command -v xkb-switch &> /dev/null; then
+    keyboard_switch="xkb-switch -s "
+else
+    keyboard_switch="setxkbmap "
+fi
+
+
+
 # the command-line arguments
 number1=$1
 number2=$2
@@ -93,29 +101,39 @@ number='^[0-9]+$'
 if [[ "$1" =~ $number ]] ; then
 	if [ -z "$number2" ]; then
 		text=$(print_lines "$quran_text" "$number1")
+		cleaned=$(echo -e "$text" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
+		echo -n "$cleaned" | xclip -selection clipboard
+
 	elif [[ -z "$number3" ]]; then
 		text=$(print_lines "$quran_text" "$number1" "$number2")
+		cleaned=$(echo -e "$text" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
+		echo -n "$cleaned" | xclip -selection clipboard
 	else
 		text=$(print_lines "$quran_text" "$number1" "$number2" "$number3")
+		cleaned=$(echo -e "$text" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
+		echo -n "$cleaned" | xclip -selection clipboard
 	fi
 	if [[ $@ == *g* ]]
 	then
 		echo "$text" > /tmp/quran_result
+		cleaned=$(echo -e "$text" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
+		echo -n "$cleaned" | xclip -selection clipboard
 		nohup gedit "/tmp/quran_result" </dev/null >/dev/null 2>&1 &
 	else
 		echo "$text"
+		cleaned=$(echo -e "$text" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
+		echo -n "$cleaned" | xclip -selection clipboard
 	fi
 else
-	xkb-switch -s ara
+	eval $keyboard_switch ara
 	pkill -RTMIN+12 i3blocks
 	pattern=$( zenity --entry --text="Search Holy Quran:" \
 		--title="search Holy Quran" --width=500 --timeout=30)
-	xkb-switch -s fr
+	eval $keyboard_switch fr
 	pkill -RTMIN+12 i3blocks
 
 	if [[ -n $pattern ]] ; then
 	   results="$(echo "$quran_text" | grep --color=always "$pattern")"
-
 	   if [[ -n $results ]]
 		   then resuls_count=$(echo "$results" | wc -l)
 		   else resuls_count=0
@@ -125,9 +143,14 @@ else
 	   echo "$resuls_count found"
 	   echo "================================"
 	   echo "$results" > /tmp/quran_result
-	   awk -F'|' '
-	   	NR==FNR {chap[FNR]=$0; next}
-	   	{printf("(\033[1;31m %d %s\033[1;0m) %s\n",$5,chap[$1],$6);}
-	   ' "$file3"  /tmp/quran_result
+	   text=$(
+	   	awk -F'|' '
+			NR==FNR {chap[FNR]=$0; next}
+			{printf("(\033[1;31m %d %s\033[1;0m) %s\n",$5,chap[$1],$6);}
+	   	' "$file3"  /tmp/quran_result
+	   )
+	   echo "$text"
+	   cleaned=$(echo -e "$text" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
+	   echo -n "$cleaned" | xclip -selection clipboard
 	fi
 fi
