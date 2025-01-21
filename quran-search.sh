@@ -37,7 +37,8 @@
 ######################################################################
 
 
-script_dir=$(dirname "$0")
+SCRIPT_PATH=$(realpath "$0")
+script_dir=$(dirname "$SCRIPT_PATH")
 file1="$script_dir/quran-simple-clean.txt"
 file2="$script_dir/quran-uthmani.txt"
 file3="$script_dir/chapters-simple.txt"
